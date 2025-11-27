@@ -1,18 +1,9 @@
 "use client";
 
-import { apiGet } from "@/lib/api";
-import { useQuery } from "@tanstack/react-query";
-
-type Health = {
-  status: string;
-  service: string;
-};
+import { useHealthQuery } from "@/lib/queries/useHealthQuery";
 
 export default function TestApiPage() {
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["health"],
-    queryFn: () => apiGet<Health>("/health"),
-  });
+  const { data, isLoading, isError, error } = useHealthQuery();
 
   return (
     <div className="mx-auto max-w-xl p-6">

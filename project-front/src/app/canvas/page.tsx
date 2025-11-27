@@ -2,8 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { useHistory } from "@/hooks/useHistory";
-import { deleteSavedImage, getSavedImages, saveCanvasImage, SavedImage } from "@/lib/api";
+import { PlacedItemData, SavedImage } from "@/lib/api";
+import { useDeleteImageMutation } from "@/lib/queries/useDeleteImageMutation";
 import { useItemsQuery } from "@/lib/queries/useItemsQuery";
+import { useSaveImageMutation } from "@/lib/queries/useSaveImageMutation";
+import { useSavedImagesQuery } from "@/lib/queries/useSavedImagesQuery";
 import type { Item } from "@/types/item";
 import { getItemImageUrl } from "@/types/item";
 import {
@@ -80,8 +83,14 @@ export default function CanvasPage() {
 
   const [photo, setPhoto] = useState<string | null>(null);
 
-  const [savedImages, setSavedImages] = useState<SavedImage[]>([]);
-  const [isLoadingSavedImages, setIsLoadingSavedImages] = useState(false);
+  const {
+    data: savedImages = [],
+    isLoading: isLoadingSavedImages,
+    refetch: refetchSavedImages,
+  } = useSavedImagesQuery(session?.accessToken, 4);
+
+  const saveImageMutation = useSaveImageMutation();
+  const deleteImageMutation = useDeleteImageMutation();
 
   const [selectedPaletteItem, setSelectedPaletteItem] = useState<Item | null>(null);
 
@@ -109,7 +118,7 @@ export default function CanvasPage() {
 
   const stageRef = useRef<Konva.Stage | null>(null);
 
-  const [isSaving, setIsSaving] = useState(false);
+  const isSaving = saveImageMutation.isPending;
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
@@ -141,35 +150,6 @@ export default function CanvasPage() {
       window.removeEventListener("touchstart", handleTouchStart);
     };
   }, []);
-
-  useEffect(() => {
-    const fetchSavedImages = async () => {
-      if (session?.accessToken) {
-        setIsLoadingSavedImages(true);
-        try {
-          const images = await getSavedImages(session.accessToken);
-          setSavedImages(images.slice(0, 4));
-        } catch (error) {
-          console.error('Failed to fetch saved images:', error);
-        } finally {
-          setIsLoadingSavedImages(false);
-        }
-      }
-    };
-
-    fetchSavedImages();
-  }, [session?.accessToken]);
-
-  const refetchSavedImages = useCallback(async () => {
-    if (session?.accessToken) {
-      try {
-        const images = await getSavedImages(session.accessToken);
-        setSavedImages(images.slice(0, 4));
-      } catch (error) {
-        console.error('Failed to refetch saved images:', error);
-      }
-    }
-  }, [session?.accessToken]);
 
   const { data: items, isLoading, isError, error, refetch } = useItemsQuery();
 
@@ -363,9 +343,6 @@ export default function CanvasPage() {
       return;
     }
 
-    setIsSaving(true);
-    setSaveMessage(null);
-
     setSelectedJewelIds([]);
 
     try {
@@ -377,20 +354,30 @@ export default function CanvasPage() {
       });
 
       const name = `Dental Preview - ${new Date().toLocaleDateString()}`;
-      await saveCanvasImage(name, dataUrl, session.accessToken, placedItems);
+      const placedItemsData: PlacedItemData[] = placedItems.map(item => ({
+        id: item.id,
+        itemId: item.itemId,
+        x: item.x,
+        y: item.y,
+        size: item.size,
+        rotation: item.rotation,
+      }));
+
+      await saveImageMutation.mutateAsync({
+        name,
+        imageData: dataUrl,
+        token: session.accessToken,
+        placedItems: placedItemsData,
+      });
 
       setSaveMessage({ type: 'success', text: 'Saved to profile!' });
       setTimeout(() => setSaveMessage(null), 3000);
-
-      refetchSavedImages();
     } catch (error) {
       console.error('Failed to save:', error);
       setSaveMessage({ type: 'error', text: 'Failed to save. Please try again.' });
       setTimeout(() => setSaveMessage(null), 3000);
-    } finally {
-      setIsSaving(false);
     }
-  }, [session?.accessToken, refetchSavedImages, placedItems]);
+  }, [session?.accessToken, placedItems, saveImageMutation]);
 
   const [isLoadingSavedImage, setIsLoadingSavedImage] = useState(false);
   
@@ -420,8 +407,10 @@ export default function CanvasPage() {
     if (!session?.accessToken) return;
     
     try {
-      await deleteSavedImage(imageId, session.accessToken);
-      setSavedImages(prev => prev.filter(img => img.id !== imageId));
+      await deleteImageMutation.mutateAsync({
+        id: imageId,
+        token: session.accessToken,
+      });
       setSaveMessage({ type: 'success', text: 'Image deleted' });
       setTimeout(() => setSaveMessage(null), 2000);
     } catch (error) {
@@ -429,7 +418,7 @@ export default function CanvasPage() {
       setSaveMessage({ type: 'error', text: 'Failed to delete' });
       setTimeout(() => setSaveMessage(null), 3000);
     }
-  }, [session?.accessToken]);
+  }, [session?.accessToken, deleteImageMutation]);
 
   const getCanvasPositionFromMouse = useCallback((): { x: number; y: number } | null => {
     const stage = stageRef.current;

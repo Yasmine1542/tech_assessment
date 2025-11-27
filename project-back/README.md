@@ -1,98 +1,372 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Dental Jewelry Preview - Backend API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+---
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Table of Contents
 
-## Description
+- [Overview](#overview)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Environment Variables](#environment-variables)
+- [Database Setup](#database-setup)
+- [API Endpoints](#api-endpoints)
+- [Authentication](#authentication)
+- [Architecture Decisions](#architecture-decisions)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+---
 
-## Project setup
+## Overview
 
-```bash
-$ npm install
+This API serves as the backend for a dental jewelry preview tool. Users can browse available jewelry items, capture photos, place jewelry on their photos, and save their creations. The API provides endpoints for:
+
+- User registration and JWT-based authentication
+- CRUD operations for jewelry items
+- Saving and retrieving user canvas compositions
+- Serving uploaded images (jewelry assets and saved canvases)
+
+---
+
+## Tech Stack
+
+- **Runtime**: Node.js 20+
+- **Framework**: NestJS 11
+- **Language**: TypeScript 5
+- **Database**: PostgreSQL
+- **ORM**: Prisma 6
+- **Authentication**: JWT with Passport.js
+- **Password Hashing**: bcrypt
+- **File Upload**: Multer
+- **Validation**: class-validator and class-transformer
+
+---
+
+## Project Structure
+
+```
+project-back/
+├── prisma/
+│   ├── schema.prisma          # Database schema definition
+│   ├── seed.ts                # Database seeding script
+│   └── migrations/            # Database migration history
+├── src/
+│   ├── auth/                  # Authentication module
+│   │   ├── auth.controller.ts
+│   │   ├── auth.service.ts
+│   │   ├── auth.module.ts
+│   │   ├── jwt.strategy.ts    # JWT validation strategy
+│   │   ├── guards/            # Route protection guards
+│   │   ├── decorators/        # Custom decorators (@CurrentUser)
+│   │   └── dto/               # Request/response data structures
+│   ├── items/                 # Jewelry items module
+│   │   ├── items.controller.ts
+│   │   ├── items.service.ts
+│   │   ├── items.module.ts
+│   │   └── dto/
+│   ├── saved-images/          # User saved canvases module
+│   │   ├── saved-images.controller.ts
+│   │   ├── saved-images.service.ts
+│   │   └── saved-images.module.ts
+│   ├── prisma/                # Database service wrapper
+│   ├── health/                # Health check endpoint
+│   ├── config/                # App configuration (multer, etc.)
+│   ├── app.module.ts          # Root module
+│   └── main.ts                # Application entry point
+├── uploads/                   # File storage directory
+│   └── saved-images/          # User canvas images
+└── test/                      # Test files
 ```
 
-## Compile and run the project
+---
+
+## Getting Started
+
+### Prerequisites
+
+Make sure you have installed:
+
+- Node.js version 20 or higher
+- PostgreSQL database server
+- npm or yarn
+
+### Installation Steps
+
+1. Navigate to the backend directory:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+cd project-back
 ```
 
-## Run tests
+2. Install dependencies:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+3. Create your environment file:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+cp .env.example .env
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+4. Edit the `.env` file with your database credentials (see Environment Variables section).
 
-## Resources
+5. Run database migrations:
 
-Check out a few resources that may come in handy when working with NestJS:
+```bash
+npx prisma migrate dev
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+6. Seed the database with sample data:
 
-## Support
+```bash
+npx prisma db seed
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+7. Start the development server:
 
-## Stay in touch
+```bash
+npm run start:dev
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+The API will be running at `http://localhost:4050`.
 
-## License
+---
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## Environment Variables
+
+Create a `.env` file in the project root with these variables:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:password@localhost:5432/dental_jewelry` |
+| `JWT_SECRET` | Secret key for signing JWT tokens (use a long random string) | `your-secret-key-min-32-characters` |
+| `PORT` | Port number for the server | `4050` |
+
+Example `.env` file:
+
+```
+DATABASE_URL="postgresql://postgres:password@localhost:5432/dental_jewelry"
+JWT_SECRET="change-this-to-a-secure-random-string-in-production"
+PORT=4050
+```
+
+---
+
+## Database Setup
+
+### Schema Overview
+
+The database has three main tables:
+
+**User** - Stores account information
+- id, name, email, password (hashed), role, timestamps
+
+**Item** - Jewelry pieces available for placement
+- id, name, imagePath, imageMime, defaultSize, category, timestamps
+
+**SavedImage** - User-created canvas compositions
+- id, name, imagePath, placedItems (JSON), userId, timestamps
+
+### Commands
+
+Apply migrations to your database:
+
+```bash
+npx prisma migrate dev
+```
+
+Reset the database (deletes all data):
+
+```bash
+npx prisma migrate reset
+```
+
+Seed initial data:
+
+```bash
+npx prisma db seed
+```
+
+Open the database viewer:
+
+```bash
+npx prisma studio
+```
+
+### Test Account
+
+After seeding, you can log in with:
+- Email: `test@test.com`
+- Password: `Test123!`
+
+---
+
+## API Endpoints
+
+### Health Check
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Returns server status |
+
+### Authentication
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/auth/register` | Create new account | No |
+| POST | `/auth/login` | Get JWT token | No |
+| GET | `/auth/me` | Get current user info | Yes |
+
+**Register request body:**
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "SecurePass123!"
+}
+```
+
+**Login request body:**
+```json
+{
+  "email": "john@example.com",
+  "password": "SecurePass123!"
+}
+```
+
+### Items
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/items` | List all items | No |
+| GET | `/items?category=gems` | Filter by category | No |
+| GET | `/items/:id` | Get single item | No |
+| GET | `/items/:id/image` | Get item image file | No |
+| POST | `/items` | Create item (multipart form) | No |
+| PATCH | `/items/:id` | Update item | No |
+| DELETE | `/items/:id` | Delete item | No |
+
+**Item response format:**
+```json
+{
+  "id": "uuid",
+  "name": "Diamond Stud",
+  "imagePath": "diamond-stud.png",
+  "imageMime": "image/png",
+  "defaultSize": 32,
+  "category": "gems",
+  "createdAt": "2025-01-01T00:00:00.000Z"
+}
+```
+
+### Saved Images
+
+All saved-images endpoints require authentication.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/saved-images` | List user's saved images |
+| GET | `/saved-images?limit=4` | Limit number of results |
+| GET | `/saved-images/:id` | Get specific saved image |
+| POST | `/saved-images` | Save new canvas (multipart form) |
+| DELETE | `/saved-images/:id` | Delete saved image |
+
+### Static Files
+
+Uploaded files are served at `/uploads/`:
+- Item images: `/uploads/filename.png`
+- Saved canvases: `/uploads/saved-images/filename.png`
+
+---
+
+## Authentication
+
+The API uses JWT tokens for authentication.
+
+### How It Works
+
+1. User logs in with email and password
+2. Server returns a JWT access token
+3. Client includes token in Authorization header for protected routes
+4. Server validates token and identifies the user
+
+### Using the Token
+
+Add this header to authenticated requests:
+
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+```
+
+### Token Payload
+
+The JWT contains:
+- `sub`: User ID
+- `email`: User email
+- `role`: User role (user/admin)
+
+---
+
+## Architecture Decisions
+
+### Why NestJS
+
+NestJS provides a structured, module-based architecture that keeps code organized as projects grow. The dependency injection system makes testing straightforward and promotes separation of concerns. TypeScript support is first-class, and the framework has excellent documentation.
+
+### Why Prisma
+
+Prisma generates TypeScript types directly from the database schema, which eliminates type mismatches between the database and application code. The query API is intuitive to use, and the migration system handles schema changes cleanly.
+
+### Why JWT Authentication
+
+JWT allows the API to be stateless. The server does not need to store session data, which simplifies deployment and scaling. Tokens are self-contained and can be validated without database lookups.
+
+### File Storage
+
+Files are currently stored on the local filesystem. For production, consider migrating to cloud storage (AWS S3, Cloudinary, etc.). The multer configuration in `src/config/multer.config.ts` can be modified to support different storage backends.
+
+### CORS
+
+Cross-origin requests are configured in `main.ts`. Update the `origin` array when deploying to include your frontend domain.
+
+---
+
+## Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run start` | Start the server |
+| `npm run start:dev` | Start with auto-reload |
+| `npm run start:prod` | Start production build |
+| `npm run build` | Compile TypeScript |
+| `npm run lint` | Check code style |
+| `npm run test` | Run unit tests |
+| `npm run test:e2e` | Run integration tests |
+
+---
+
+## Troubleshooting
+
+**Database connection failed**
+
+Check that PostgreSQL is running and your DATABASE_URL is correct. Test with:
+```bash
+npx prisma db pull
+```
+
+**Port already in use**
+
+Change the PORT in your .env file or stop the process using port 4050.
+
+**Migration errors**
+
+Try resetting the database:
+```bash
+npx prisma migrate reset
+```
+Warning: This deletes all data.
+
+**JWT errors**
+
+Make sure JWT_SECRET is set in your .env file and matches between restarts.
