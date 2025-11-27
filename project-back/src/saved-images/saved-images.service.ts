@@ -4,6 +4,7 @@ import {
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { existsSync } from 'fs';
 import { unlink } from 'fs/promises';
 import { join } from 'path';
@@ -27,7 +28,7 @@ export class SavedImagesService {
       data: {
         name: name || `Canvas - ${new Date().toLocaleDateString()}`,
         imagePath: `saved-images/${file.filename}`,
-        placedItems: placedItems ?? undefined,
+        placedItems: placedItems as Prisma.InputJsonValue,
         userId,
       },
     });
