@@ -22,6 +22,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
+      - name: Install dependencies
+        run: |
+         cd project-back
+         npm ci
       - name: Generate Prisma Client
         run: |
           cd project-back
@@ -68,4 +72,5 @@ jobs:
           package: .
 
           
+
 
